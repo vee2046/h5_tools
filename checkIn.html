@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>打卡助手</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous">
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --green: #10b981;
+      --orange: #f59e0b;
+      --gray: #6b7280;
+      --bg: #f3f4f6;
+      --card: #ffffff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: #111827; min-height: 100vh; }
+
+    #date-display { font-size: 0.85rem; opacity: 0.85; margin-top: 4px; }
+
+    main { max-width: 480px; margin: 0 auto; padding: 16px; }
+
+    .card { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .card-title { font-size: 0.85rem; font-weight: 600; color: var(--gray); text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .btn-row { display: flex; gap: 12px; margin-bottom: 16px; }
+    .btn { flex: 1; padding: 14px; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s, transform 0.1s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .btn-in { background: var(--green); color: white; }
+    .btn-out { background: var(--orange); color: white; }
+    .btn-clear { background: #fee2e2; color: #991b1b; font-size: 0.82rem; padding: 6px 12px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; white-space: nowrap; }
+    .btn-clear:hover { background: #fecaca; }
+
+    .event-list { list-style: none; }
+    .event-list li { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid #f3f4f6; font-size: 0.9rem; }
+    .event-list li:first-child { border-top: none; }
+    .event-icon { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; flex-shrink: 0; }
+    .event-icon.in { background: #d1fae5; color: #065f46; }
+    .event-icon.out { background: #fef3c7; color: #92400e; }
+    .event-empty { color: var(--gray); font-size: 0.85rem; }
+    .duration { font-size: 0.85rem; color: var(--gray); margin-top: 12px; padding-top: 12px; border-top: 1px solid #f3f4f6; }
+    .duration span { font-weight: 600; color: var(--primary); }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th { color: var(--gray); font-weight: 600; padding: 6px 4px; text-align: center; font-size: 0.78rem; }
+    td { padding: 10px 4px; text-align: center; border-top: 1px solid #f3f4f6; }
+    tr.today-row td { background: #eef2ff; font-weight: 600; }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+    .badge-ok { background: #d1fae5; color: #065f46; }
+    .badge-partial { background: #fef3c7; color: #92400e; }
+    .badge-none { background: #f3f4f6; color: var(--gray); }
+
+    .stat-row { display: flex; justify-content: space-around; }
+    .stat-item { text-align: center; }
+    .stat-item .num { font-size: 1.8rem; font-weight: 700; color: var(--primary); }
+    .stat-item .desc { font-size: 0.78rem; color: var(--gray); margin-top: 2px; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="card">
+      <div class="card-title" style="margin-bottom:16px">今日打卡</div>
+      <div class="btn-row">
+        <button class="btn btn-in" id="btn-in" onclick="clockAction('in')">
+          <i class="fas fa-sign-in-alt"></i> 上班打卡
+        </button>
+        <button class="btn btn-out" id="btn-out" onclick="clockAction('out')">
+          <i class="fas fa-sign-out-alt"></i> 下班打卡
+        </button>
+      </div>
+      <div class="duration" id="duration-display" style="display:none"></div>
+    </div>
+    <div class="card" style="max-height: 300px; overflow-y: auto;">
+        <div class="card-header"><div class="card-title">今日打卡记录</div></div>
+      <ul class="event-list" id="today-events"></ul>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">近 7 天记录</div>
+        <button class="btn-clear" onclick="clearOldData()"><i class="fas fa-trash-alt"></i> 清除旧数据</button>
+      </div>
+      <table>
+        <thead>
+          <tr><th>日期</th><th>首次上班</th><th>末次下班</th><th>时长</th><th>状态</th></tr>
+        </thead>
+        <tbody id="week-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title" id="month-title" style="margin-bottom:16px">本月汇总</div>
+      <div class="stat-row">
+        <div class="stat-item"><div class="num" id="stat-attend">0</div><div class="desc">出勤天数</div></div>
+        <div class="stat-item"><div class="num" id="stat-full">0</div><div class="desc">完整打卡</div></div>
+        <div class="stat-item"><div class="num" id="stat-missing">0</div><div class="desc">缺卡天数</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" id="month-detail-title" style="margin-bottom:16px">本月打卡明细</div>
+      <table>
+        <thead>
+          <tr><th>日期</th><th>首次上班</th><th>末次下班</th><th>时长</th><th>状态</th></tr>
+        </thead>
+        <tbody id="month-detail-tbody"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <script>
+    const KEY = 'checkin_records';
+
+    function getRecords() { return JSON.parse(localStorage.getItem(KEY) || '{}'); }
+    function saveRecords(r) { localStorage.setItem(KEY, JSON.stringify(r)); }
+
+    function dateKey(d = new Date()) {
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    function minsToStr(mins) {
+      if (mins <= 0) return '';
+      const h = Math.floor(mins / 60), m = mins % 60;
+      return h > 0 ? `${h}h ${m}m` : `${m}m`;
+    }
+
+    function calcTotal(events) {
+      let total = 0, inTime = null;
+      for (const e of events) {
+        if (e.t === 'in') { inTime = e.time; }
+        else if (e.t === 'out' && inTime) {
+          const [ih, im] = inTime.split(':').map(Number);
+          const [oh, om] = e.time.split(':').map(Number);
+          total += (oh * 60 + om) - (ih * 60 + im);
+          inTime = null;
+        }
+      }
+      return total;
+    }
+
+    function clockAction(type) {
+      const records = getRecords();
+      const key = dateKey();
+      if (!records[key]) records[key] = [];
+      const last = records[key][records[key].length - 1];
+      records[key].push({ t: type, time: new Date().toTimeString().slice(0, 8) });
+      saveRecords(records);
+      renderAll();
+    }
+
+    function clearOldData() {
+      const records = getRecords();
+      const now = new Date();
+      const monthPrefix = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+      const cutoff = dateKey(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6));
+      let deleted = 0;
+      for (const key of Object.keys(records)) {
+        if (!key.startsWith(monthPrefix) && key < cutoff) { delete records[key]; deleted++; }
+      }
+      saveRecords(records);
+      alert(deleted > 0 ? `已清除 ${deleted} 天的旧数据` : '没有需要清除的旧数据');
+      renderAll();
+    }
+
+    function renderToday() {
+      const events = getRecords()[dateKey()] || [];
+
+      const listEl = document.getElementById('today-events');
+      listEl.innerHTML = events.length === 0
+        ? '<li><span class="event-empty">今日暂无打卡记录</span></li>'
+        : [...events].reverse().map(e => `<li>
+            <div class="event-icon ${e.t}"><i class="fas fa-sign-${e.t}-alt"></i></div>
+            <span>${e.t === 'in' ? '上班' : '下班'}</span>
+            <span style="font-weight:600">${e.time}</span>
+          </li>`).join('');
+
+      const total = calcTotal(events);
+      const durEl = document.getElementById('duration-display');
+      durEl.style.display = total > 0 ? '' : 'none';
+      if (total > 0) durEl.innerHTML = `累计在班 <span>${minsToStr(total)}</span>`;
+    }
+
+    function renderWeek() {
+      const records = getRecords();
+      const today = dateKey();
+      const rows = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const key = dateKey(d);
+        const events = records[key] || [];
+        const firstIn = events.find(e => e.t === 'in');
+        const lastOut = [...events].reverse().find(e => e.t === 'out');
+        const total = calcTotal(events);
+        let badge, cls;
+        if (!events.length) { badge = '缺卡'; cls = 'badge-none'; }
+        else if (lastOut) { badge = '正常'; cls = 'badge-ok'; }
+        else { badge = '在班'; cls = 'badge-partial'; }
+        rows.push(`<tr${key === today ? ' class="today-row"' : ''}>
+          <td>${i === 0 ? '今天' : `${d.getMonth()+1}/${d.getDate()}`}</td>
+          <td>${firstIn ? firstIn.time : '--'}</td>
+          <td>${lastOut ? lastOut.time : '--'}</td>
+          <td>${total > 0 ? minsToStr(total) : '--'}</td>
+          <td><span class="badge ${cls}">${badge}</span></td>
+        </tr>`);
+      }
+      document.getElementById('week-tbody').innerHTML = rows.join('');
+    }
+
+    function renderMonth() {
+      const records = getRecords();
+      const now = new Date();
+      const prefix = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+      document.getElementById('month-title').textContent = `${now.getFullYear()}年${now.getMonth()+1}月汇总`;
+      let attend = 0, full = 0, missing = 0;
+      for (const [key, events] of Object.entries(records)) {
+        if (!key.startsWith(prefix) || !events.length) continue;
+        attend++;
+        if (events.some(e => e.t === 'out')) full++; else missing++;
+      }
+      document.getElementById('stat-attend').textContent = attend;
+      document.getElementById('stat-full').textContent = full;
+      document.getElementById('stat-missing').textContent = missing;
+    }
+
+    function renderMonthDetail() {
+      const records = getRecords();
+      const now = new Date();
+      const prefix = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+      document.getElementById('month-detail-title').textContent = `${now.getFullYear()}年${now.getMonth()+1}月打卡明细`;
+      const days = Object.keys(records).filter(k => k.startsWith(prefix)).sort().reverse();
+      const rows = days.map(key => {
+        const events = records[key] || [];
+        const firstIn = events.find(e => e.t === 'in');
+        const lastOut = [...events].reverse().find(e => e.t === 'out');
+        const total = calcTotal(events);
+        const d = new Date(key);
+        let badge, cls;
+        if (!events.length) { badge = '缺卡'; cls = 'badge-none'; }
+        else if (lastOut) { badge = '正常'; cls = 'badge-ok'; }
+        else { badge = '在班'; cls = 'badge-partial'; }
+        const isToday = key === dateKey();
+        return `<tr${isToday ? ' class="today-row"' : ''}>
+          <td>${d.getMonth()+1}/${d.getDate()}</td>
+          <td>${firstIn ? firstIn.time : '--'}</td>
+          <td>${lastOut ? lastOut.time : '--'}</td>
+          <td>${total > 0 ? minsToStr(total) : '--'}</td>
+          <td><span class="badge ${cls}">${badge}</span></td>
+        </tr>`;
+      });
+      document.getElementById('month-detail-tbody').innerHTML = rows.length ? rows.join('') : '<tr><td colspan="5" style="color:var(--gray);padding:16px">本月暂无记录</td></tr>';
+    }
+
+    function renderAll() { renderToday(); renderWeek(); renderMonth(); renderMonthDetail(); }
+
+    const _now = new Date();
+    const _days = ['周日','周一','周二','周三','周四','周五','周六'];
+
+    renderAll();
+  </script>
+</body>
+</html>
