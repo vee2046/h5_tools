@@ -177,6 +177,19 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="paste-modal" onclick="closePasteModal(event)">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <div class="modal-title">粘贴数据合并</div>
+        <button class="btn-modal-close" onclick="closePasteModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <p style="font-size:0.85rem;color:var(--gray);margin-bottom:12px">无法自动读取剪切板，请手动将数据粘贴到下方</p>
+      <textarea id="paste-textarea" style="width:100%;height:150px;border:1px solid #e5e7eb;border-radius:8px;padding:10px;font-size:0.82rem;resize:vertical;font-family:monospace;outline:none;color:#111827" placeholder='{"2026-01-01":[{"t":"in","time":"09:00:00"}]}'></textarea>
+      <div id="paste-error" style="display:none;color:#dc2626;font-size:0.82rem;margin-top:6px"></div>
+      <button onclick="submitPasteData()" style="margin-top:12px;width:100%;padding:13px;background:var(--primary);color:white;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer">合并数据</button>
+    </div>
+  </div>
+
   <script>
     const KEY = 'checkin_records';
 
@@ -415,20 +428,22 @@
       try {
         text = await navigator.clipboard.readText();
       } catch (_) {
-        alert('无法读取剪切板，请检查浏览器权限');
+        openPasteModal();
         return;
       }
+      const result = doMerge(text);
+      if (typeof result === 'string') { alert(result); return; }
+      if (result !== false) { closeMoreTools(); alert('数据合并成功'); }
+    }
+
+    function doMerge(text) {
       let imported;
       try { imported = JSON.parse(text); } catch (_) {
-        alert('剪切板内容不是有效的 JSON 格式');
-        return;
+        return '内容不是有效的 JSON 格式';
       }
-      if (!isValidRecords(imported)) {
-        alert('数据格式不正确，无法合并');
-        return;
-      }
+      if (!isValidRecords(imported)) return '数据格式不正确，无法合并';
       const importCount = Object.keys(imported).length;
-      if (!confirm(`检测到 ${importCount} 天的打卡数据，是否合并到当前记录？`)) return;
+      if (!confirm(`检测到 ${importCount} 天的打卡数据，是否合并到当前记录？`)) return false;
       const records = getRecords();
       for (const [key, events] of Object.entries(imported)) {
         if (!records[key]) {
@@ -443,8 +458,40 @@
       }
       saveRecords(records);
       renderAll();
-      closeMoreTools();
-      alert('数据合并成功');
+      return null;
+    }
+
+    function openPasteModal() {
+      document.getElementById('paste-textarea').value = '';
+      document.getElementById('paste-error').style.display = 'none';
+      document.getElementById('paste-modal').classList.add('active');
+    }
+
+    function closePasteModal(e) {
+      if (!e || e.target === document.getElementById('paste-modal')) {
+        document.getElementById('paste-modal').classList.remove('active');
+      }
+    }
+
+    function submitPasteData() {
+      const text = document.getElementById('paste-textarea').value.trim();
+      const errEl = document.getElementById('paste-error');
+      if (!text) {
+        errEl.textContent = '请先粘贴数据';
+        errEl.style.display = '';
+        return;
+      }
+      const result = doMerge(text);
+      if (typeof result === 'string') {
+        errEl.textContent = result;
+        errEl.style.display = '';
+        return;
+      }
+      if (result !== false) {
+        closePasteModal();
+        closeMoreTools();
+        alert('数据合并成功');
+      }
     }
 
     const _now = new Date();
