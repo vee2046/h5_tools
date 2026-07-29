@@ -70,6 +70,14 @@
     .modal-title { font-size: 1rem; font-weight: 700; color: #111827; }
     .btn-modal-close { background: #f3f4f6; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 1rem; color: var(--gray); display: flex; align-items: center; justify-content: center; }
     .btn-modal-close:hover { background: #e5e7eb; }
+
+    .btn-more { display: block; width: 100%; padding: 14px; background: var(--card); border: 2px dashed #d1d5db; border-radius: 12px; color: var(--gray); font-size: 0.95rem; font-weight: 600; cursor: pointer; text-align: center; margin-bottom: 16px; transition: background 0.2s, border-color 0.2s; }
+    .btn-more:hover { background: #f9fafb; border-color: #9ca3af; }
+
+    .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .tool-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 20px 12px; background: #f3f4f6; border: none; border-radius: 12px; cursor: pointer; font-size: 0.9rem; font-weight: 600; color: #374151; transition: background 0.2s; }
+    .tool-btn:hover { background: #e5e7eb; }
+    .tool-btn i { font-size: 1.4rem; color: var(--primary); }
   </style>
 </head>
 <body>
@@ -126,6 +134,10 @@
     <button class="btn-prev-month" onclick="openLastMonth()">
       <i class="fas fa-calendar-alt"></i> 查看上个月记录
     </button>
+
+    <button class="btn-more" onclick="openMoreTools()">
+      <i class="fas fa-ellipsis-h"></i> 更多
+    </button>
   </main>
 
   <div class="modal-overlay" id="last-month-modal" onclick="closeLastMonth(event)">
@@ -145,6 +157,23 @@
         </thead>
         <tbody id="last-month-tbody"></tbody>
       </table>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="more-tools-modal" onclick="closeMoreTools(event)">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <div class="modal-title">工具</div>
+        <button class="btn-modal-close" onclick="closeMoreTools()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="tools-grid">
+        <button class="tool-btn" onclick="copyData()">
+          <i class="fas fa-copy"></i><span>复制数据</span>
+        </button>
+        <button class="tool-btn" onclick="mergeData()">
+          <i class="fas fa-code-branch"></i><span>合并数据</span>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -342,6 +371,80 @@
       if (!e || e.target === document.getElementById('last-month-modal')) {
         document.getElementById('last-month-modal').classList.remove('active');
       }
+    }
+
+    function openMoreTools() {
+      document.getElementById('more-tools-modal').classList.add('active');
+    }
+
+    function closeMoreTools(e) {
+      if (!e || e.target === document.getElementById('more-tools-modal')) {
+        document.getElementById('more-tools-modal').classList.remove('active');
+      }
+    }
+
+    async function copyData() {
+      const data = localStorage.getItem(KEY) || '{}';
+      try {
+        await navigator.clipboard.writeText(data);
+      } catch (_) {
+        const ta = document.createElement('textarea');
+        ta.value = data;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      alert('数据已复制到剪切板');
+    }
+
+    function isValidRecords(data) {
+      if (typeof data !== 'object' || data === null || Array.isArray(data)) return false;
+      const dateRe = /^\d{4}-\d{2}-\d{2}$/;
+      for (const [key, val] of Object.entries(data)) {
+        if (!dateRe.test(key) || !Array.isArray(val)) return false;
+        for (const e of val) {
+          if (!e || typeof e !== 'object' || (e.t !== 'in' && e.t !== 'out') || typeof e.time !== 'string') return false;
+        }
+      }
+      return true;
+    }
+
+    async function mergeData() {
+      let text;
+      try {
+        text = await navigator.clipboard.readText();
+      } catch (_) {
+        alert('无法读取剪切板，请检查浏览器权限');
+        return;
+      }
+      let imported;
+      try { imported = JSON.parse(text); } catch (_) {
+        alert('剪切板内容不是有效的 JSON 格式');
+        return;
+      }
+      if (!isValidRecords(imported)) {
+        alert('数据格式不正确，无法合并');
+        return;
+      }
+      const importCount = Object.keys(imported).length;
+      if (!confirm(`检测到 ${importCount} 天的打卡数据，是否合并到当前记录？`)) return;
+      const records = getRecords();
+      for (const [key, events] of Object.entries(imported)) {
+        if (!records[key]) {
+          records[key] = events;
+        } else {
+          const seen = new Set(records[key].map(e => `${e.t}|${e.time}`));
+          for (const e of events) {
+            if (!seen.has(`${e.t}|${e.time}`)) { records[key].push(e); seen.add(`${e.t}|${e.time}`); }
+          }
+          records[key].sort((a, b) => a.time.localeCompare(b.time));
+        }
+      }
+      saveRecords(records);
+      renderAll();
+      closeMoreTools();
+      alert('数据合并成功');
     }
 
     const _now = new Date();
