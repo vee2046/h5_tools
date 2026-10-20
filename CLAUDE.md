@@ -15,7 +15,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `index.html` | 引用 `assets/index-*.js` + `assets/index-*.css` | 每日喝水。需要随上游构建更新这两份带 hash 的 bundle |
 | `checkIn.html` | 单文件，`<style>` 与 `<script>` 内联 | 打卡助手。改这一个文件即可 |
 | `feishu.html` | 单文件，所有 CSS 与数据内联 | 「通往 AGI 之路」文章分类索引。改这一个文件即可 |
-| `list/index.html` | 引用 `list/assets/*.js` + `*.css` | 任务管理（晨光便签）。**源码不对外开放**，对外文档维持「暂未开源」口径。具体源仓库位置见 `CLAUDE.LOCAL.md` |
+| `list/index.html` | 引用 `list/assets/*.js` + `*.css` | 任务管理。**源码不对外开放**，对外文档维持「暂未开源」口径。具体源仓库位置见 `CLAUDE.LOCAL.md` |
 
 `build.flag` 是上游构建留下的标记文件，没有功能性含义。`icons/` 下的 PNG 是各入口的 favicon。
 
