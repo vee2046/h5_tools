@@ -10,6 +10,7 @@
 | `checkIn.html` | 打卡助手 | 上下班打卡、累计在班时长、月度汇总，支持数据导入/导出 |
 | `feishu.html` | 通往 AGI 之路 | AI/Agent/Skill/Codex 等文章分类索引 |
 | `list/index.html` | 任务管理 | 静态资源可直接运行。源码暂未开源 |
+| `whereismoney/index.html` | 宝盒是怎样月光的 | 记录月收入、分期与支出，预测未来 36 个月还剩多少现金可用，提前看见月光红线 |
 
 > 每个入口都是一个独立的静态页面，下载或部署后用浏览器打开对应的 HTML 即可使用。
 
@@ -19,7 +20,7 @@
 
 打卡助手、AGI 文章索引同理。
 
-任务管理见 `list/index.html`。
+任务管理见 `list/index.html`，宝盒是怎样月光的见 `whereismoney/index.html`。
 
 ## 数据与隐私
 

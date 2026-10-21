@@ -1,0 +1,1527 @@
+/* ABOUTME: 朱账 · 现金流账本 —— 朱砂账房风格样式 */
+/* ABOUTME: 手机优先、图标优先；配色与字体规范见 DESIGN.md */
+
+/* ---------- Reset & Tokens ---------- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+  --red: #c73e33;
+  --red-deep: #8c1f18;
+  --red-dark: #6e130e;
+  --red-soft: #f7e7e3;
+  --gold: #c9a15a;
+  --paper: #faf6ef;
+  --card: #ffffff;
+  --ink: #2b2320;
+  --ink-soft: #85736a;
+  --line: #efe4d6;
+  --radius: 18px;
+  --shadow: 0 8px 24px -10px rgba(140, 31, 24, 0.14);
+  --tabbar-h: 62px;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: "Noto Sans SC", -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--paper);
+  background-image: radial-gradient(rgba(140, 31, 24, 0.035) 1px, transparent 1px);
+  background-size: 22px 22px;
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  border: 0;
+  background: none;
+  color: inherit;
+}
+
+input {
+  font: inherit;
+}
+
+.num {
+  font-family: "Noto Serif SC", serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.5px;
+}
+
+/* ---------- App Frame ---------- */
+.app {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 20px);
+}
+
+/* ---------- Topbar（朱漆封面） ---------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 18px 46px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--red) 0%, var(--red-deep) 72%, var(--red-dark) 100%);
+  border-radius: 0 0 26px 26px;
+  box-shadow: 0 10px 30px -12px rgba(110, 19, 14, 0.5);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.seal {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  color: var(--red-deep);
+  font-family: "Noto Serif SC", serif;
+  font-weight: 900;
+  font-size: 20px;
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 2px rgba(140, 31, 24, 0.25);
+}
+
+.brand-text strong {
+  display: block;
+  font-family: "Noto Serif SC", serif;
+  font-size: 14.5px;
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.brand-text small {
+  font-size: 10px;
+  opacity: 0.72;
+  letter-spacing: 3px;
+}
+
+.today-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ---------- Views ---------- */
+.view {
+  display: none;
+}
+
+.view.is-active {
+  display: block;
+  animation: rise 0.22s ease-out;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------- Cards ---------- */
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  margin: 14px 16px 0;
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+
+.card-title svg {
+  color: var(--red);
+}
+
+.card-title .count {
+  margin-left: auto;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--red-soft);
+  color: var(--red-deep);
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.card-title small {
+  margin-left: auto;
+  font-weight: 500;
+  color: var(--ink-soft);
+  letter-spacing: 0;
+}
+
+/* ---------- Hero（本月余额，叠压封面） ---------- */
+/* 首卡叠压盒盖（总览 hero 与其余三页首卡统一） */
+.card.hero,
+.card.overlap {
+  margin: -30px 16px 0;
+  position: relative;
+  z-index: 2;
+}
+
+.card.hero {
+  padding: 18px;
+}
+
+.hero-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  letter-spacing: 1px;
+}
+
+.hero-label svg {
+  color: var(--red);
+}
+
+.hero-num {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 36px;
+  font-weight: 900;
+  line-height: 1.15;
+  color: var(--red);
+  word-break: break-all;
+}
+
+.hero-num.is-neg {
+  color: var(--ink);
+}
+
+.hero-num.is-neg svg {
+  color: var(--red-deep);
+  flex: none;
+}
+
+.hero-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.hchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: var(--red-soft);
+  color: var(--red-deep);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.hero-chips .hchip.redline {
+  background: #fff;
+  box-shadow: inset 0 0 0 1.5px var(--red);
+}
+
+.hero-foot {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 12px;
+  padding-top: 11px;
+  border-top: 1px dashed var(--line);
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+.hero-foot svg {
+  color: var(--gold);
+}
+
+/* ---------- Guide（空数据引导） ---------- */
+.guide {
+  width: calc(100% - 32px);
+  margin: 14px 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  border: 1.5px dashed var(--gold);
+  background: linear-gradient(135deg, #fffdf8, #fdf6ec);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.guide-ic {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: var(--red);
+  color: #fff;
+}
+
+.guide > svg {
+  margin-left: auto;
+  color: var(--ink-soft);
+}
+
+/* ---------- Section Head & Month List ---------- */
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 20px 18px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--ink-soft);
+}
+
+.section-head svg {
+  color: var(--red);
+}
+
+.month-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 16px;
+}
+
+.mcard {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 13px 15px;
+}
+
+.mcard.neg {
+  border-color: rgba(140, 31, 24, 0.4);
+  background: linear-gradient(0deg, rgba(140, 31, 24, 0.045), rgba(140, 31, 24, 0.045)), #fff;
+}
+
+.mcard-top {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.mic {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: var(--red-soft);
+  color: var(--red-deep);
+}
+
+.mcard-top b {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.badge-now {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--gold), #b08a3f);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.mcard-top .bal {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 19px;
+  font-weight: 900;
+  color: var(--red);
+}
+
+.mcard-top .bal.is-neg {
+  color: var(--ink);
+}
+
+.mcard-top .bal.is-neg svg {
+  color: var(--red-deep);
+}
+
+.mstats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.mstat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.mstat svg {
+  color: var(--red);
+}
+
+.mstat.due {
+  background: var(--red-soft);
+  border-color: transparent;
+  color: var(--red-deep);
+}
+
+.expand-wrap {
+  padding: 12px 16px 4px;
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 12px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--red), var(--red-deep));
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  box-shadow: 0 6px 16px -8px rgba(140, 31, 24, 0.55);
+  transition: transform 0.12s ease;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-ghost {
+  background: var(--red-soft);
+  color: var(--red-deep);
+  box-shadow: none;
+}
+
+.btn-danger {
+  background: transparent;
+  border: 1px dashed rgba(140, 31, 24, 0.45);
+  color: var(--red-deep);
+  box-shadow: none;
+  font-size: 13px;
+  padding: 10px;
+}
+
+.icon-btn {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--red-soft);
+  color: var(--red-deep);
+  transition: transform 0.12s ease;
+}
+
+.icon-btn:active {
+  transform: scale(0.92);
+}
+
+/* ---------- Fields ---------- */
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 11px 13px;
+  border-radius: 14px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.field:focus-within {
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px rgba(199, 62, 51, 0.12);
+}
+
+.field svg {
+  flex: none;
+  color: var(--red);
+}
+
+.field input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.field input::placeholder {
+  color: var(--ink-soft);
+  font-weight: 500;
+  opacity: 0.75;
+}
+
+.chart-scroll svg {
+  display: block;
+  margin: 0 auto;
+  max-width: none;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 9px;
+}
+
+/* ---------- Query ---------- */
+.query-card .field {
+  margin-top: 2px;
+}
+
+.q-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 4px;
+}
+
+.q-head b {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.q-head .rbadge {
+  margin-left: auto;
+}
+
+.rowline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--line);
+  font-size: 13.5px;
+}
+
+.rowline svg {
+  color: var(--red);
+  flex: none;
+}
+
+.rowline .amt {
+  margin-left: auto;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.rowline .amt.pos {
+  color: var(--red);
+}
+
+.rowline .amt.is-neg {
+  color: var(--ink);
+}
+
+.q-bal {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--red), var(--red-deep));
+  color: #fff;
+}
+
+.q-bal.is-neg {
+  background: linear-gradient(135deg, #3a2c26, var(--ink));
+  box-shadow: inset 0 0 0 1.5px rgba(199, 62, 51, 0.55);
+}
+
+.q-bal-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.q-bal-num {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 21px;
+  font-weight: 900;
+}
+
+/* ---------- Compare ---------- */
+.chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+
+.chips::-webkit-scrollbar {
+  display: none;
+}
+
+.chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 13px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.chip.on {
+  background: var(--red);
+  border-color: var(--red);
+  color: #fff;
+}
+
+.chart-scroll {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.chart-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.legend {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.d-red {
+  background: linear-gradient(135deg, #d8533f, var(--red-deep));
+}
+
+.d-ink {
+  background: #3a2c26;
+}
+
+svg .bar {
+  fill: url(#rg);
+  animation: grow 0.45s ease-out both;
+  transform-box: fill-box;
+  transform-origin: bottom;
+}
+
+svg .bar.neg {
+  fill: #3a2c26;
+  transform-origin: top;
+}
+
+@keyframes grow {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+svg .blabel {
+  font-size: 9px;
+  fill: var(--ink-soft);
+  font-weight: 600;
+  font-family: "Noto Sans SC", sans-serif;
+}
+
+svg .mlabel {
+  font-size: 9.5px;
+  fill: var(--ink);
+  font-weight: 600;
+  font-family: "Noto Sans SC", sans-serif;
+}
+
+svg .zero {
+  stroke: var(--gold);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+
+/* ---------- Summary Cards ---------- */
+.sum-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  padding: 14px 16px 0;
+}
+
+.sum-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 12px 6px;
+  border-radius: var(--radius);
+  background: var(--card);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.sum-card svg {
+  color: var(--gold);
+}
+
+.sum-card small {
+  font-size: 10px;
+  color: var(--ink-soft);
+  letter-spacing: 2px;
+  font-weight: 600;
+}
+
+.sum-card b {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.sum-card .num {
+  font-size: 12.5px;
+  font-weight: 900;
+  color: var(--red);
+  word-break: break-all;
+}
+
+.sum-card .num.is-neg {
+  color: var(--ink);
+}
+
+/* ---------- Settings ---------- */
+.inst-list {
+  margin-top: 10px;
+}
+
+.inst-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--line);
+}
+
+.inst-item:last-child {
+  border-bottom: 0;
+  padding-bottom: 2px;
+}
+
+.inst-ic {
+  width: 38px;
+  height: 38px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: var(--red-soft);
+  color: var(--red-deep);
+}
+
+.inst-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.inst-meta b {
+  display: block;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.inst-meta small {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+.add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.danger-zone {
+  padding: 16px;
+}
+
+/* ---------- Empty State ---------- */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 30px 0 22px;
+  color: var(--ink-soft);
+}
+
+.empty svg {
+  opacity: 0.5;
+  color: var(--red);
+}
+
+.empty p {
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.empty.small {
+  padding: 16px 0 10px;
+}
+
+/* ---------- Tabbar ---------- */
+.tabbar {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  height: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  display: flex;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid var(--line);
+  z-index: 40;
+}
+
+.tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--ink-soft);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  position: relative;
+}
+
+.tab.on {
+  color: var(--red);
+}
+
+.tab.on::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 26px;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: linear-gradient(90deg, var(--red), var(--red-deep));
+}
+
+.tab svg {
+  transition: transform 0.15s ease;
+}
+
+.tab.on svg {
+  transform: translateY(-1px);
+}
+
+/* ---------- Toast ---------- */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 18px);
+  transform: translateX(-50%) translateY(16px);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 17px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+  z-index: 200; /* 高于弹窗遮罩（100），保证弹窗内校验提示可见 */
+  white-space: nowrap;
+}
+
+.toast svg {
+  color: var(--gold);
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%);
+}
+
+/* ---------- 红线预警卡 ---------- */
+.alert-card {
+  margin: 12px 16px 0;
+  border-radius: var(--radius);
+  padding: 15px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  text-align: left;
+  width: calc(100% - 32px);
+  animation: rise 0.25s ease-out;
+}
+
+.alert-card:active {
+  transform: scale(0.985);
+}
+
+.alert-ic {
+  width: 42px;
+  height: 42px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 13px;
+}
+
+.alert-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.alert-body b {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.alert-body p {
+  margin-top: 4px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  opacity: 0.88;
+}
+
+.alert-arrow {
+  flex: none;
+  align-self: center;
+  opacity: 0.65;
+}
+
+.alert-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.alert-tags span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+/* 高危：月光红线 */
+.alert-card.danger {
+  color: #fff;
+  background: linear-gradient(135deg, var(--red) 0%, var(--red-deep) 78%, var(--red-dark) 100%);
+  box-shadow: 0 10px 26px -12px rgba(110, 19, 14, 0.6);
+  border: 0;
+}
+
+.alert-card.danger .alert-ic {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+/* 顶级警示：恢复遥遥无期（深绛红） */
+.alert-card.critical {
+  color: #fff;
+  background: linear-gradient(135deg, var(--red-deep) 0%, var(--red-dark) 82%);
+  box-shadow: 0 12px 30px -10px rgba(110, 19, 14, 0.75);
+  border: 0;
+}
+
+.alert-card.critical .alert-ic {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
+/* 安全：宝盒充盈 */
+.alert-card.safe {
+  background: linear-gradient(135deg, #fdf8ec, #f7ecd2);
+  border: 1.5px solid rgba(201, 161, 90, 0.55);
+  color: var(--gold-deep);
+  box-shadow: none;
+}
+
+.alert-card.safe .alert-ic {
+  background: var(--gold);
+  color: #fff;
+}
+
+/* ---------- 月卡红线标记 ---------- */
+.rbadge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  flex: none;
+}
+
+.rbadge.moon {
+  background: var(--red-deep);
+  color: #fff;
+}
+
+/* ---------- 查询页红线提示 ---------- */
+.q-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 600;
+}
+
+.q-note svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+.q-note.danger {
+  background: var(--red-soft);
+  color: var(--red-deep);
+}
+
+.q-linehint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--red-deep);
+  opacity: 0.75;
+}
+
+.q-linehint svg {
+  flex: none;
+}
+
+/* ---------- 图表辅助线标注 ---------- */
+svg .linenote {
+  font-size: 8.5px;
+  font-weight: 700;
+  font-family: "Noto Sans SC", sans-serif;
+}
+
+/* ---------- 分期记录：筛查与分页 ---------- */
+.inst-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.field input[type="search"] {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.filter-chips {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.filter-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.st-tag {
+  font-style: normal;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  margin-left: 6px;
+  vertical-align: 1px;
+  white-space: nowrap;
+}
+
+.st-active {
+  background: var(--red-soft);
+  color: var(--red-deep);
+}
+
+.st-pending {
+  background: #f7ecd2;
+  color: var(--gold-deep);
+}
+
+.st-done {
+  background: var(--paper);
+  color: var(--ink-soft);
+  border: 1px solid var(--line);
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 34px;
+  margin-top: 8px;
+}
+
+.pg-info {
+  min-width: 46px;
+  text-align: center;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.pg-total {
+  margin-left: auto;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.pg-total.alone {
+  margin: 0 auto;
+}
+
+.icon-btn[disabled] {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* ===== 弹窗组件（提示 / 确认） ===== */
+.modal-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  background: rgba(43, 35, 32, 0.45);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  animation: maskIn 0.18s ease-out;
+  transition: opacity 0.18s ease-out;
+}
+
+.modal-mask.out {
+  opacity: 0;
+}
+
+.modal {
+  width: 100%;
+  max-width: 320px;
+  max-height: calc(100dvh - 56px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: var(--card);
+  border-radius: 20px;
+  padding: 22px 18px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 24px 60px -20px rgba(110, 19, 14, 0.45);
+  animation: modalPop 0.22s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+.modal-ic {
+  width: 46px;
+  height: 46px;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.modal-ic.info {
+  background: var(--red-soft);
+  color: var(--red-deep);
+}
+
+.modal-ic.danger {
+  background: linear-gradient(135deg, var(--red), var(--red-deep));
+  color: #fff;
+}
+
+.modal b {
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.modal p {
+  margin: 8px 0 16px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--ink-soft);
+}
+
+.modal-btns {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.modal-btns .btn {
+  flex: 1;
+  padding: 11px 12px;
+  font-size: 13.5px;
+}
+
+@keyframes maskIn {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes modalPop {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(8px);
+  }
+}
+
+/* ===== 对比页：已选 / 添加分离 ===== */
+.sel-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip.sel {
+  background: var(--red);
+  border-color: var(--red);
+  color: #fff;
+}
+
+.sel-empty {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.sel-actions {
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.mini-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--red-soft);
+  color: var(--red-deep);
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mini-btn:active {
+  transform: scale(0.96);
+}
+
+.add-month-row {
+  display: flex;
+  gap: 9px;
+}
+
+.add-month-row .field {
+  flex: 1;
+  min-width: 0;
+}
+
+.add-month-row .icon-btn.add {
+  width: 44px;
+  height: auto;
+  align-self: stretch;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--red), var(--red-deep));
+  color: #fff;
+}
+
+.quick-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 9px;
+}
+
+/* ===== 支出试算：hero 卡入口 ===== */
+.hero-predict {
+  width: 100%;
+  margin-top: 11px;
+  padding: 11px 0 0;
+  border: 0;
+  border-top: 1px dashed var(--line);
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--red-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.hero-predict:active {
+  opacity: 0.7;
+}
+
+/* ===== 弹窗表单（支出试算） ===== */
+.modal-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin: 2px 0 16px;
+}
+.modal-form .field {
+  width: 100%;
+}
+
+/* ===== 预测结果：警示列表 ===== */
+.warn-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 4px 0 16px;
+}
+.warn-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  background: var(--red-soft);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ink);
+  text-align: left;
+}
+.warn-item .wic {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 9px;
+  background: #fff;
+  color: var(--red-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.warn-item b {
+  color: var(--red-deep);
+}
+.warn-item.warn-safe {
+  background: #f6ecd4;
+  border: 1px solid #e6d3a4;
+}
+.warn-item.warn-safe .wic {
+  color: var(--gold-deep);
+}
+.warn-item.warn-safe b {
+  color: var(--gold-deep);
+}
+.warn-item.note {
+  background: var(--paper);
+  border: 1px dashed var(--line);
+}
+.warn-item.note .wic {
+  background: var(--red-soft);
+  color: var(--red-deep);
+}
+.warn-item.note b {
+  color: var(--ink);
+}
+
+/* 预测结果：期数月度清单 */
+.pm-title {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  letter-spacing: 1px;
+  margin: 0 0 7px;
+}
+.pm-list {
+  width: 100%;
+  max-height: 176px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper);
+  margin-bottom: 16px;
+}
+.pm-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 12px;
+  font-size: 12px;
+  border-bottom: 1px dashed var(--line);
+}
+.pm-row:last-child {
+  border-bottom: none;
+}
+.pm-row span {
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+.pm-row b {
+  font-family: "Noto Serif SC", serif;
+  font-weight: 800;
+  color: var(--red-deep);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.pm-row.neg b {
+  color: var(--ink);
+}
