@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#6b7c3a">
+  <meta name="description" content="药品管家 - 记录购买的药品与使用频率，测算下次需要购买的时间">
+  <title>药品管家</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%236b7c3a'/%3E%3Cg transform='rotate(-45 12 12)' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linecap='round'%3E%3Crect x='2' y='8.5' width='20' height='7' rx='3.5'/%3E%3Cline x1='12' y1='8.5' x2='12' y2='15.5'/%3E%3C/g%3E%3C/svg%3E">
+  <style>
+    :root {
+      --olive-900: #3c4526;
+      --olive-700: #55642d;
+      --olive-600: #6b7c3a;
+      --olive-500: #7f9146;
+      --olive-200: #d3dab4;
+      --olive-100: #e8ecd9;
+      --olive-050: #f3f5ea;
+      --bg: #eff1e6;
+      --card: #ffffff;
+      --text: #2b3121;
+      --muted: #7b836b;
+      --line: #e6e8da;
+      --warn: #c9821f;
+      --warn-bg: #fdf2de;
+      --danger: #bb4f3c;
+      --danger-bg: #fbeae5;
+      --radius: 18px;
+      --shadow: 0 2px 10px rgba(60, 69, 38, 0.08);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-tap-highlight-color: transparent;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    button, input, select, textarea { font-family: inherit; }
+    .ic { width: 1em; height: 1em; display: block; }
+
+    /* ---------- 顶栏 ---------- */
+    .appbar {
+      position: sticky; top: 0; z-index: 20;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      /* 安全区留白加在顶部（刘海/状态栏那一侧），上下留白对称，内容才是垂直居中的 */
+      padding: calc(16px + env(safe-area-inset-top)) 16px 16px 16px;
+      background: linear-gradient(160deg, var(--olive-700), var(--olive-600));
+      color: #fff;
+      box-shadow: 0 2px 12px rgba(60, 69, 38, 0.22);
+    }
+    .appbar-brand { display: flex; align-items: center; gap: 11px; min-width: 0; }
+    .logo {
+      width: 40px; height: 40px; flex: none;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255, 255, 255, 0.18);
+      border-radius: 12px; font-size: 22px;
+    }
+    .appbar h1 { font-size: 1.12rem; font-weight: 700; letter-spacing: 0.5px; }
+    .appbar p { font-size: 0.72rem; opacity: 0.78; margin-top: 2px; }
+    .appbar-right { display: flex; align-items: center; gap: 8px; flex: none; }
+    .icon-btn {
+      width: 38px; height: 38px; flex: none;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255, 255, 255, 0.16);
+      border: none; border-radius: 12px; color: #fff;
+      font-size: 18px; cursor: pointer;
+    }
+    .icon-btn:active { background: rgba(255, 255, 255, 0.3); }
+    .badge-dot {
+      position: absolute; top: 5px; right: 5px;
+      min-width: 17px; height: 17px; padding: 0 4px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--danger); color: #fff;
+      border: 2px solid var(--olive-600);
+      border-radius: 9px;
+      font-size: 0.62rem; font-weight: 700;
+    }
+    .bell-wrap { position: relative; }
+
+    main { max-width: 480px; margin: 0 auto; padding: 16px 16px 110px; }
+
+    /* ---------- 告急横幅 ---------- */
+    .alert-bar {
+      display: flex; align-items: center; gap: 11px;
+      padding: 13px 15px; margin-bottom: 14px;
+      background: var(--danger-bg);
+      border: 1px solid #f0c9be;
+      border-left: 4px solid var(--danger);
+      border-radius: 14px;
+      color: var(--danger);
+    }
+    .alert-bar .ic { font-size: 22px; flex: none; animation: pulse 1.6s ease-in-out infinite; }
+    .alert-bar strong { display: block; font-size: 0.92rem; }
+    .alert-bar span { font-size: 0.76rem; color: #a5564a; }
+    @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.12); opacity: 0.72; } }
+
+    /* ---------- 概览 ---------- */
+    .stat-row {
+      display: flex; background: var(--card); border-radius: var(--radius);
+      box-shadow: var(--shadow); padding: 16px 8px; margin-bottom: 16px;
+    }
+    .stat-item { flex: 1; text-align: center; position: relative; }
+    .stat-item + .stat-item::before {
+      content: ''; position: absolute; left: 0; top: 12%; height: 76%;
+      width: 1px; background: var(--line);
+    }
+    .stat-item .num { font-size: 1.7rem; font-weight: 700; color: var(--olive-600); line-height: 1.1; }
+    .stat-item .num.danger { color: var(--danger); }
+    .stat-item .num.warn { color: var(--warn); }
+    .stat-item .desc { font-size: 0.72rem; color: var(--muted); margin-top: 4px; }
+
+    /* ---------- 分区标题 ---------- */
+    .section-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin: 4px 0 10px; padding: 0 2px;
+    }
+    .section-head h2 { font-size: 0.8rem; color: var(--muted); font-weight: 600; letter-spacing: 1px; }
+    .sort-btn {
+      display: flex; align-items: center; gap: 5px;
+      background: var(--olive-100); border: none; border-radius: 20px;
+      padding: 5px 11px; font-size: 0.72rem; color: var(--olive-700);
+      font-weight: 600; cursor: pointer;
+    }
+    .sort-btn .ic { font-size: 13px; }
+
+    /* ---------- 药品卡片 ---------- */
+    .med {
+      display: grid;
+      grid-template-columns: 76px 1fr;
+      grid-template-areas: 'ring body' 'acts acts';
+      gap: 12px 14px;
+      background: var(--card); border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 15px; margin-bottom: 12px;
+      border-left: 4px solid var(--olive-200);
+    }
+    .med[data-level="warn"] { border-left-color: var(--warn); }
+    .med[data-level="danger"] { border-left-color: var(--danger); background: #fffdfc; }
+    .med[data-level="empty"] { border-left-color: var(--danger); background: var(--danger-bg); }
+
+    .ring-wrap { grid-area: ring; position: relative; width: 76px; height: 76px; }
+    .ring { width: 76px; height: 76px; transform: rotate(-90deg); display: block; }
+    .ring-track { fill: none; stroke: var(--olive-050); stroke-width: 9; }
+    .ring-bar { fill: none; stroke: var(--olive-600); stroke-width: 9; stroke-linecap: round; transition: stroke-dashoffset 0.4s ease; }
+    .med[data-level="warn"] .ring-bar { stroke: var(--warn); }
+    .med[data-level="danger"] .ring-bar { stroke: var(--danger); }
+    .med[data-level="empty"] .ring-bar { stroke: var(--danger); }
+    .ring-label {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .ring-label b { font-size: 1.45rem; font-weight: 700; color: var(--olive-700); line-height: 1; }
+    .med[data-level="warn"] .ring-label b { color: var(--warn); }
+    .med[data-level="danger"] .ring-label b,
+    .med[data-level="empty"] .ring-label b { color: var(--danger); }
+    .ring-label small { font-size: 0.62rem; color: var(--muted); margin-top: 2px; }
+
+    .med-body { grid-area: body; min-width: 0; }
+    .med-title { display: flex; align-items: center; gap: 7px; margin-bottom: 7px; }
+    .med-title h3 {
+      font-size: 1rem; font-weight: 700; color: var(--text);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .tag {
+      flex: none; display: flex; align-items: center; gap: 3px;
+      padding: 2px 7px; border-radius: 20px;
+      font-size: 0.64rem; font-weight: 700;
+    }
+    .tag .ic { font-size: 11px; }
+    .tag-danger { background: var(--danger-bg); color: var(--danger); }
+    .tag-ok { background: var(--olive-100); color: var(--olive-700); }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 9px; }
+    .chip {
+      display: flex; align-items: center; gap: 4px;
+      background: var(--olive-050); color: var(--olive-700);
+      border-radius: 8px; padding: 3px 8px; font-size: 0.7rem; font-weight: 600;
+    }
+    .chip .ic { font-size: 12px; }
+
+    .bar { height: 7px; background: var(--olive-050); border-radius: 4px; overflow: hidden; margin-bottom: 7px; }
+    .bar i { display: block; height: 100%; background: var(--olive-600); border-radius: 4px; transition: width 0.4s ease; }
+    .med[data-level="warn"] .bar i { background: var(--warn); }
+    .med[data-level="danger"] .bar i, .med[data-level="empty"] .bar i { background: var(--danger); }
+
+    .med-foot {
+      display: flex; flex-wrap: wrap; gap: 3px 12px;
+      font-size: 0.7rem; color: var(--muted);
+    }
+    .med-foot span { display: flex; align-items: center; gap: 4px; }
+    .med-foot .ic { font-size: 12px; flex: none; }
+    .med-foot b { color: var(--olive-700); font-weight: 700; }
+
+    .med-acts {
+      grid-area: acts; display: flex; gap: 8px;
+      padding-top: 11px; border-top: 1px solid var(--line);
+    }
+    .act {
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px;
+      padding: 9px 4px; border-radius: 10px; border: none;
+      font-size: 0.76rem; font-weight: 600; cursor: pointer;
+      background: var(--olive-050); color: var(--olive-700);
+    }
+    .act .ic { font-size: 15px; }
+    .act:active { transform: scale(0.97); }
+    .act-primary { background: var(--olive-600); color: #fff; }
+    .act-danger { background: var(--danger-bg); color: var(--danger); }
+    .act-danger .ic { font-size: 15px; }
+
+    /* ---------- 空状态 ---------- */
+    .empty {
+      text-align: center; padding: 56px 24px; color: var(--muted);
+    }
+    .empty .ic { width: 58px; height: 58px; color: var(--olive-200); margin: 0 auto 14px; }
+    .empty p { font-size: 0.86rem; }
+
+    /* ---------- 悬浮添加按钮 ---------- */
+    .fab {
+      position: fixed; right: 18px; bottom: calc(20px + env(safe-area-inset-bottom));
+      width: 56px; height: 56px; z-index: 30;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--olive-600); color: #fff;
+      border: none; border-radius: 50%; font-size: 26px;
+      box-shadow: 0 6px 20px rgba(85, 100, 45, 0.38);
+      cursor: pointer;
+    }
+    .fab:active { transform: scale(0.93); }
+
+    /* ---------- 弹层 ---------- */
+    .overlay {
+      display: none; position: fixed; inset: 0; z-index: 100;
+      background: rgba(43, 49, 33, 0.45);
+      align-items: flex-end; justify-content: center;
+    }
+    .overlay.active { display: flex; }
+    .sheet {
+      width: 100%; max-width: 480px;
+      background: var(--card);
+      border-radius: 22px 22px 0 0;
+      max-height: 92vh; display: flex; flex-direction: column;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .sheet-grip { width: 38px; height: 4px; border-radius: 3px; background: var(--olive-200); margin: 9px auto 0; flex: none; }
+    .sheet-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 18px; flex: none;
+    }
+    .sheet-head h2 { font-size: 1.02rem; font-weight: 700; }
+    .sheet-head .icon-btn { background: var(--olive-050); color: var(--muted); }
+    .sheet-body { padding: 0 18px 18px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .sheet-foot {
+      display: flex; gap: 10px; padding: 12px 18px 18px; flex: none;
+      border-top: 1px solid var(--line);
+    }
+    .btn {
+      flex: 1; padding: 13px; border: none; border-radius: 12px;
+      font-size: 0.95rem; font-weight: 600; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+    }
+    .btn .ic { font-size: 16px; }
+    .btn-primary { background: var(--olive-600); color: #fff; }
+    .btn-ghost { background: var(--olive-050); color: var(--olive-700); flex: 0 0 auto; padding: 13px 18px; }
+    .btn-danger { background: var(--danger-bg); color: var(--danger); flex: 0 0 auto; padding: 13px 18px; }
+    .btn:active { transform: scale(0.98); }
+
+    /* ---------- 表单 ---------- */
+    .field { display: block; margin-bottom: 13px; }
+    .field-label {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 0.72rem; color: var(--muted); font-weight: 600; margin-bottom: 6px;
+    }
+    .field-label .ic { font-size: 13px; color: var(--olive-500); }
+    .field-row { display: flex; gap: 10px; }
+    .field-row .field { flex: 1; min-width: 0; }
+    input[type="text"], input[type="number"], input[type="date"], select, textarea {
+      width: 100%; padding: 11px 12px;
+      border: 1px solid var(--line); border-radius: 11px;
+      background: var(--olive-050); color: var(--text);
+      font-size: 0.92rem; outline: none; -webkit-appearance: none; appearance: none;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--olive-500); background: #fff; }
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237b836b' stroke-width='3' stroke-linecap='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 11px center; padding-right: 30px;
+    }
+    .input-group { display: flex; gap: 6px; }
+    .input-group input { flex: 1; min-width: 0; }
+    .input-group select { flex: 0 0 84px; }
+    .seg { display: flex; gap: 6px; }
+    .seg input { position: absolute; opacity: 0; pointer-events: none; }
+    .seg label {
+      flex: 1; text-align: center; padding: 10px 4px;
+      background: var(--olive-050); border: 1px solid var(--line); border-radius: 11px;
+      font-size: 0.82rem; font-weight: 600; color: var(--muted); cursor: pointer;
+    }
+    .seg input:checked + label {
+      background: var(--olive-600); border-color: var(--olive-600); color: #fff;
+    }
+    .switch-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 11px 13px; background: var(--olive-050); border-radius: 12px; margin-bottom: 13px;
+    }
+    .switch-row .txt { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 600; }
+    .switch-row .txt .ic { font-size: 15px; color: var(--olive-500); }
+    .switch-row small { display: block; font-size: 0.68rem; color: var(--muted); font-weight: 400; margin-top: 2px; }
+    .switch { position: relative; width: 46px; height: 27px; flex: none; }
+    .switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; z-index: 2; }
+    .switch i {
+      position: absolute; inset: 0; background: var(--olive-200);
+      border-radius: 14px; transition: background 0.2s;
+    }
+    .switch i::after {
+      content: ''; position: absolute; top: 3px; left: 3px;
+      width: 21px; height: 21px; background: #fff; border-radius: 50%;
+      transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .switch input:checked + i { background: var(--olive-600); }
+    .switch input:checked + i::after { transform: translateX(19px); }
+
+    .tool-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .tool-btn {
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+      padding: 18px 10px; background: var(--olive-050); border: none; border-radius: 14px;
+      cursor: pointer; font-size: 0.82rem; font-weight: 600; color: var(--olive-700);
+    }
+    .tool-btn .ic { font-size: 21px; }
+    .tool-btn:active { background: var(--olive-100); }
+    .tool-btn.danger { color: var(--danger); background: var(--danger-bg); }
+    .stepper { display: flex; align-items: center; gap: 10px; }
+    .stepper button {
+      width: 34px; height: 34px; border-radius: 10px; border: none;
+      background: var(--olive-100); color: var(--olive-700); font-size: 1.1rem;
+      font-weight: 700; cursor: pointer; line-height: 1;
+    }
+    .stepper b { min-width: 40px; text-align: center; font-size: 1.05rem; }
+
+    .hint { font-size: 0.72rem; color: var(--muted); line-height: 1.6; }
+    textarea { min-height: 96px; resize: vertical; font-size: 0.82rem; font-family: ui-monospace, Menlo, Consolas, monospace; }
+
+    /* ---------- 提示条 ---------- */
+    .toast {
+      position: fixed; left: 50%; bottom: calc(90px + env(safe-area-inset-bottom));
+      transform: translateX(-50%) translateY(20px);
+      z-index: 200; opacity: 0; pointer-events: none;
+      background: rgba(43, 49, 33, 0.93); color: #fff;
+      padding: 11px 18px; border-radius: 22px; font-size: 0.82rem; font-weight: 600;
+      transition: opacity 0.25s, transform 0.25s; max-width: 88vw; text-align: center;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<!-- 图标雪碧图 -->
+<svg style="display:none" aria-hidden="true">
+  <symbol id="i-pill" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <g transform="rotate(-45 12 12)"><rect x="2" y="8.5" width="20" height="7" rx="3.5"/><line x1="12" y1="8.5" x2="12" y2="15.5"/></g>
+  </symbol>
+  <symbol id="i-cart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+  </symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+  </symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+  </symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+  </symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+  </symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+  </symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+  </symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+  </symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>
+  </symbol>
+  <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+  </symbol>
+  <symbol id="i-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>
+  </symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+  </symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+  </symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="20 6 9 17 4 12"/>
+  </symbol>
+  <symbol id="i-sort" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/>
+  </symbol>
+</svg>
+
+<header class="appbar">
+  <div class="appbar-brand">
+    <span class="logo"><svg class="ic"><use href="#i-pill"></use></svg></span>
+    <div>
+      <h1>药品管家</h1>
+      <p>看看什么时候该买药了</p>
+    </div>
+  </div>
+  <div class="appbar-right">
+    <span class="bell-wrap">
+      <button class="icon-btn" onclick="openMore()" aria-label="更多"><svg class="ic"><use href="#i-layers"></use></svg></button>
+      <span class="badge-dot" id="urgent-badge" style="display:none">0</span>
+    </span>
+  </div>
+</header>
+
+<main>
+  <div id="alert-slot"></div>
+
+  <div class="stat-row">
+    <div class="stat-item">
+      <div class="num" id="stat-total">0</div>
+      <div class="desc">在管药品</div>
+    </div>
+    <div class="stat-item">
+      <div class="num" id="stat-urgent">0</div>
+      <div class="desc">需补货</div>
+    </div>
+    <div class="stat-item">
+      <div class="num" id="stat-soon">0</div>
+      <div class="desc">两周内用完</div>
+    </div>
+  </div>
+
+  <div class="section-head">
+    <h2>药品清单</h2>
+    <button class="sort-btn" id="sort-btn" onclick="toggleSort()">
+      <svg class="ic"><use href="#i-sort"></use></svg><span id="sort-label">按剩余天数</span>
+    </button>
+  </div>
+
+  <div id="list"></div>
+</main>
+
+<button class="fab" onclick="openForm()" aria-label="添加药品">
+  <svg class="ic"><use href="#i-plus"></use></svg>
+</button>
+
+<!-- 添加 / 编辑 -->
+<div class="overlay" id="ov-form">
+  <div class="sheet">
+    <div class="sheet-grip"></div>
+    <div class="sheet-head">
+      <h2 id="form-title">添加药品</h2>
+      <button class="icon-btn" onclick="closeSheet('ov-form')"><svg class="ic"><use href="#i-x"></use></svg></button>
+    </div>
+    <div class="sheet-body">
+      <label class="field">
+        <span class="field-label"><svg class="ic"><use href="#i-pill"></use></svg>药品名称</span>
+        <input type="text" id="f-name" placeholder="例如：维生素C" maxlength="24" autocomplete="off">
+      </label>
+
+      <div class="field-row">
+        <label class="field">
+          <span class="field-label"><svg class="ic"><use href="#i-pill"></use></svg>每次用量</span>
+          <div class="input-group">
+            <input type="number" id="f-peruse" min="0" step="0.5" value="1" inputmode="decimal">
+            <select id="f-unit">
+              <option value="片">片</option>
+              <option value="粒">粒</option>
+              <option value="袋">袋</option>
+              <option value="支">支</option>
+              <option value="瓶">瓶</option>
+              <option value="丸">丸</option>
+              <option value="贴">贴</option>
+              <option value="管">管</option>
+              <option value="ml">ml</option>
+            </select>
+          </div>
+        </label>
+        <label class="field">
+          <span class="field-label"><svg class="ic"><use href="#i-refresh"></use></svg>使用频率</span>
+          <div class="input-group">
+            <select id="f-period">
+              <option value="day">每天</option>
+              <option value="week">每周</option>
+              <option value="month">每月</option>
+            </select>
+            <input type="number" id="f-freq" min="0" step="1" value="1" inputmode="numeric">
+          </div>
+        </label>
+      </div>
+
+      <div class="field-row">
+        <label class="field">
+          <span class="field-label"><svg class="ic"><use href="#i-box"></use></svg>累计购入</span>
+          <input type="number" id="f-total" min="0" step="1" value="30" inputmode="numeric">
+        </label>
+        <label class="field">
+          <span class="field-label"><svg class="ic"><use href="#i-cart"></use></svg>每次购买量</span>
+          <input type="number" id="f-buysize" min="0" step="1" value="30" inputmode="numeric">
+        </label>
+      </div>
+
+      <div class="field-row">
+        <label class="field">
+          <span class="field-label"><svg class="ic"><use href="#i-calendar"></use></svg>购买日期</span>
+          <input type="date" id="f-start">
+        </label>
+        <label class="field">
+          <span class="field-label"><svg class="ic"><use href="#i-check"></use></svg>已用</span>
+          <input type="number" id="f-used" min="0" step="0.5" value="0" inputmode="decimal">
+        </label>
+      </div>
+
+      <div class="switch-row">
+        <div class="txt">
+          <svg class="ic"><use href="#i-refresh"></use></svg>
+          <div>按频率自动扣减<small>关闭后只在「已用」里手动改</small></div>
+        </div>
+        <span class="switch"><input type="checkbox" id="f-auto" checked><i></i></span>
+      </div>
+
+      <label class="field">
+        <span class="field-label"><svg class="ic"><use href="#i-edit"></use></svg>备注</span>
+        <textarea id="f-note" placeholder="可选，例如饭后服用 / 睡前服用" maxlength="120"></textarea>
+      </label>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn btn-danger" id="btn-delete" onclick="deleteMed()" style="display:none">
+        <svg class="ic"><use href="#i-trash"></use></svg>
+      </button>
+      <button class="btn btn-primary" onclick="saveMed()">
+        <svg class="ic"><use href="#i-check"></use></svg>保存
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 更多 -->
+<div class="overlay" id="ov-more">
+  <div class="sheet">
+    <div class="sheet-grip"></div>
+    <div class="sheet-head">
+      <h2>设置与数据</h2>
+      <button class="icon-btn" onclick="closeSheet('ov-more')"><svg class="ic"><use href="#i-x"></use></svg></button>
+    </div>
+    <div class="sheet-body">
+      <div class="switch-row">
+        <div class="txt">
+          <svg class="ic"><use href="#i-alert"></use></svg>
+          <div>提醒阈值<small>剩余不足该天数时提示补货</small></div>
+        </div>
+        <div class="stepper">
+          <button onclick="changeWarn(-1)">−</button>
+          <b id="warn-value">4</b>
+          <button onclick="changeWarn(1)">+</button>
+        </div>
+      </div>
+
+      <div class="tool-grid">
+        <button class="tool-btn" onclick="copyData()">
+          <svg class="ic"><use href="#i-copy"></use></svg><span>复制数据</span>
+        </button>
+        <button class="tool-btn" onclick="mergeData()">
+          <svg class="ic"><use href="#i-layers"></use></svg><span>合并数据</span>
+        </button>
+        <button class="tool-btn danger" onclick="clearAll()">
+          <svg class="ic"><use href="#i-trash"></use></svg><span>清空全部</span>
+        </button>
+      </div>
+
+      <p class="hint" style="margin-top:14px">数据只保存在这台设备的浏览器里，换设备或清理浏览器数据会丢失，建议定期复制备份。</p>
+    </div>
+  </div>
+</div>
+
+<!-- 粘贴合并 -->
+<div class="overlay" id="ov-paste">
+  <div class="sheet">
+    <div class="sheet-grip"></div>
+    <div class="sheet-head">
+      <h2>粘贴数据合并</h2>
+      <button class="icon-btn" onclick="closeSheet('ov-paste')"><svg class="ic"><use href="#i-x"></use></svg></button>
+    </div>
+    <div class="sheet-body">
+      <p class="hint" style="margin-bottom:10px">无法自动读取剪切板，请手动将数据粘贴到下方</p>
+      <textarea id="paste-text" placeholder='{"meds":[...]}'></textarea>
+      <div id="paste-error" style="display:none;color:var(--danger);font-size:0.78rem;margin-top:8px"></div>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn btn-primary" onclick="submitPaste()">
+        <svg class="ic"><use href="#i-check"></use></svg>合并
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const KEY = 'medicine_tracker_v1';
+  const PERIOD_DAYS = { day: 1, week: 7, month: 30 };
+  const RING_C = 2 * Math.PI * 42;
+
+  let state = load();
+  let editingId = null;
+  let sortBy = 'days';
+
+  function defaults() {
+    return { meds: [], warnDays: 4, sortBy: 'days' };
+  }
+  function load() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return defaults();
+      const d = JSON.parse(raw);
+      const s = defaults();
+      if (d && Array.isArray(d.meds)) s.meds = d.meds;
+      if (d && typeof d.warnDays === 'number') s.warnDays = d.warnDays;
+      if (d && (d.sortBy === 'days' || d.sortBy === 'name')) s.sortBy = d.sortBy;
+      return s;
+    } catch (e) {
+      return defaults();
+    }
+  }
+  function save() {
+    localStorage.setItem(KEY, JSON.stringify(state));
+  }
+
+  /* ---------- 日期 ---------- */
+  function dateKey(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function todayKey() { return dateKey(new Date()); }
+  function parseKey(k) {
+    const p = String(k).split('-');
+    return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+  }
+  function diffDays(a, b) {
+    return Math.round((parseKey(b).getTime() - parseKey(a).getTime()) / 86400000);
+  }
+  function addDays(k, n) {
+    const d = parseKey(k);
+    d.setDate(d.getDate() + n);
+    return dateKey(d);
+  }
+  function fmtMD(k) {
+    const d = parseKey(k);
+    if (isNaN(d.getTime())) return '—';
+    return (d.getMonth() + 1) + '/' + d.getDate();
+  }
+  function roundNum(n) {
+    return Math.round(n * 10) / 10;
+  }
+
+  /* ---------- 计算 ---------- */
+  function dailyUse(m) {
+    const span = PERIOD_DAYS[m.period] || 1;
+    return (Number(m.perUse) || 0) * (Number(m.freq) || 0) / span;
+  }
+
+  /** 按频率把上次记录之后消耗掉的量补上（只算已完整过去的天，今天不算） */
+  function advance(m) {
+    if (m.auto === false) return;
+    const today = todayKey();
+    if (!m.lastAdvance) m.lastAdvance = m.startDate || today;
+    const d = diffDays(m.lastAdvance, today);
+    if (d > 0) m.used = (Number(m.used) || 0) + d * dailyUse(m);
+    m.lastAdvance = today;
+  }
+
+  function calc(m) {
+    const total = Number(m.total) || 0;
+    const used = Math.min(total, Math.max(0, Number(m.used) || 0));
+    const remaining = Math.max(0, total - used);
+    const du = dailyUse(m);
+    const daysLeft = du > 0 ? remaining / du : Infinity;
+    const warnDays = state.warnDays || 4;
+    let level = 'ok';
+    if (remaining <= 0) level = 'empty';
+    else if (daysLeft < warnDays) level = 'danger';
+    else if (daysLeft < 14) level = 'warn';
+    const endKey = isFinite(daysLeft) ? addDays(todayKey(), Math.ceil(daysLeft)) : '';
+    return {
+      total: total, used: used, remaining: remaining, daysLeft: daysLeft,
+      level: level, endKey: endKey, pct: total > 0 ? remaining / total : 0
+    };
+  }
+
+  /* ---------- 渲染 ---------- */
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function periodText(m) {
+    const p = m.period || 'day';
+    const f = Number(m.freq) || 0;
+    if (f <= 0) return '未设定频率';
+    const unit = p === 'day' ? '天' : (p === 'week' ? '周' : '月');
+    return '每' + unit + ' ' + f + ' 次';
+  }
+  function levelTag(c) {
+    if (c.level === 'empty') return '<span class="tag tag-danger"><svg class="ic"><use href="#i-alert"></use></svg>已用完</span>';
+    if (c.level === 'danger') return '<span class="tag tag-danger"><svg class="ic"><use href="#i-alert"></use></svg>该买了</span>';
+    // 两周内用完但还没到提醒阈值：不加文字标签，靠琥珀色圆环提示即可
+    if (c.level === 'warn') return '';
+    return '<span class="tag tag-ok"><svg class="ic"><use href="#i-check"></use></svg>充足</span>';
+  }
+
+  function sortedMeds() {
+    const list = state.meds.slice();
+    if (sortBy === 'name') {
+      list.sort((a, b) => String(a.name).localeCompare(String(b.name), 'zh-Hans-CN'));
+    } else {
+      list.sort((a, b) => calc(a).daysLeft - calc(b).daysLeft);
+    }
+    return list;
+  }
+
+  function render() {
+    state.meds.forEach(advance);
+    state.sortBy = sortBy;
+    save();
+
+    const calcs = state.meds.map(function (m) { return calc(m); });
+    const urgent = calcs.filter(function (c) { return c.level === 'danger' || c.level === 'empty'; }).length;
+    const soon = calcs.filter(function (c) { return c.level === 'warn'; }).length;
+
+    document.getElementById('stat-total').textContent = state.meds.length;
+    const uEl = document.getElementById('stat-urgent');
+    uEl.textContent = urgent;
+    uEl.className = 'num' + (urgent > 0 ? ' danger' : '');
+    document.getElementById('stat-soon').textContent = soon;
+    document.getElementById('stat-soon').className = 'num' + (soon > 0 ? ' warn' : '');
+
+    const badge = document.getElementById('urgent-badge');
+    badge.textContent = urgent;
+    badge.style.display = urgent > 0 ? 'flex' : 'none';
+
+    document.getElementById('alert-slot').innerHTML = urgent > 0
+      ? '<div class="alert-bar"><svg class="ic"><use href="#i-alert"></use></svg>' +
+        '<div><strong>' + urgent + ' 种药品该补货了</strong>' +
+        '<span>剩余不足 ' + (state.warnDays || 4) + ' 天，抓紧买</span></div></div>'
+      : '';
+
+    const list = document.getElementById('list');
+    if (!state.meds.length) {
+      list.innerHTML = '<div class="empty"><svg class="ic"><use href="#i-box"></use></svg>' +
+        '<p>还没有药品记录<br>点右下角的 + 添加</p></div>';
+      return;
+    }
+
+    const items = sortedMeds().map(function (m) {
+      const c = calc(m);
+      const offset = (RING_C * (1 - c.pct)).toFixed(1);
+      const daysText = c.level === 'empty' ? '0' : (isFinite(c.daysLeft) ? Math.floor(c.daysLeft) : '∞');
+      // 告急的卡片把「再买」提为主按钮，平时两个按钮平级
+      const buyCls = (c.level === 'danger' || c.level === 'empty') ? 'act act-primary' : 'act';
+      const foot = c.level === 'empty'
+        ? '<span><svg class="ic"><use href="#i-alert"></use></svg><b>已用完</b>，需重新购买</span>'
+        : '<span><svg class="ic"><use href="#i-calendar"></use></svg>预计 <b>' + (c.endKey ? fmtMD(c.endKey) : '不会用完') + '</b> 用完</span>';
+      const bought = '<span><svg class="ic"><use href="#i-box"></use></svg>购买 <b>' + (m.startDate ? fmtMD(m.startDate) : '—') + '</b></span>';
+      return '<article class="med" data-level="' + c.level + '">' +
+        '<div class="ring-wrap">' +
+          '<svg class="ring" viewBox="0 0 100 100">' +
+            '<circle class="ring-track" cx="50" cy="50" r="42"/>' +
+            '<circle class="ring-bar" cx="50" cy="50" r="42" style="stroke-dasharray:' + RING_C.toFixed(1) + ';stroke-dashoffset:' + offset + '"/>' +
+          '</svg>' +
+          '<div class="ring-label"><b>' + daysText + '</b><small>天可用</small></div>' +
+        '</div>' +
+        '<div class="med-body">' +
+          '<div class="med-title"><h3>' + esc(m.name) + '</h3>' + levelTag(c) + '</div>' +
+          '<div class="chips">' +
+            '<span class="chip"><svg class="ic"><use href="#i-pill"></use></svg>每次 ' + roundNum(m.perUse) + ' ' + esc(m.unit || '片') + '</span>' +
+            '<span class="chip"><svg class="ic"><use href="#i-refresh"></use></svg>' + periodText(m) + '</span>' +
+          '</div>' +
+          '<div class="bar"><i style="width:' + (c.pct * 100).toFixed(1) + '%"></i></div>' +
+          '<div class="med-foot">' + bought + foot + '</div>' +
+        '</div>' +
+        '<div class="med-acts">' +
+          '<button class="' + buyCls + '" onclick="restock(\'' + m.id + '\')"><svg class="ic"><use href="#i-cart"></use></svg>再买</button>' +
+          '<button class="act" onclick="openForm(\'' + m.id + '\')"><svg class="ic"><use href="#i-edit"></use></svg>编辑</button>' +
+        '</div>' +
+      '</article>';
+    }).join('');
+
+    list.innerHTML = items;
+    document.getElementById('sort-label').textContent = sortBy === 'days' ? '按剩余天数' : '按名称';
+  }
+
+  /* ---------- 操作 ---------- */
+  function findMed(id) {
+    for (const m of state.meds) if (m.id === id) return m;
+    return null;
+  }
+
+  /** 再买一盒：累计购入量增加。已用是累计值，不清零，剩余 = 累计购入 - 已用 */
+  function restock(id) {
+    const m = findMed(id);
+    if (!m) return;
+    advance(m);
+    const size = Number(m.buySize) || Number(m.total) || 0;
+    m.total = (Number(m.total) || 0) + size;
+    m.lastAdvance = todayKey();
+    save();
+    render();
+    toast('已补货 ' + size + ' ' + (m.unit || '片'));
+  }
+
+  function toggleSort() {
+    sortBy = sortBy === 'days' ? 'name' : 'days';
+    state.sortBy = sortBy;
+    save();
+    render();
+  }
+
+  function changeWarn(delta) {
+    let w = (Number(state.warnDays) || 4) + delta;
+    if (w < 1) w = 1;
+    if (w > 30) w = 30;
+    state.warnDays = w;
+    document.getElementById('warn-value').textContent = w;
+    save();
+    render();
+  }
+
+  /* ---------- 表单 ---------- */
+  function openForm(id) {
+    editingId = id || null;
+    const m = id ? findMed(id) : null;
+    document.getElementById('form-title').textContent = m ? '编辑药品' : '添加药品';
+    document.getElementById('btn-delete').style.display = m ? 'flex' : 'none';
+
+    document.getElementById('f-name').value = m ? m.name : '';
+    document.getElementById('f-peruse').value = m ? m.perUse : 1;
+    document.getElementById('f-unit').value = m ? (m.unit || '片') : '片';
+    document.getElementById('f-period').value = m ? (m.period || 'day') : 'day';
+    document.getElementById('f-freq').value = m ? m.freq : 1;
+    document.getElementById('f-total').value = m ? m.total : 30;
+    document.getElementById('f-buysize').value = m ? (m.buySize || m.total || 0) : 30;
+    document.getElementById('f-start').value = m ? m.startDate : todayKey();
+    document.getElementById('f-used').value = m ? roundNum(m.used || 0) : 0;
+    document.getElementById('f-auto').checked = m ? (m.auto !== false) : true;
+    document.getElementById('f-note').value = m ? (m.note || '') : '';
+
+    document.getElementById('ov-form').classList.add('active');
+  }
+
+  function saveMed() {
+    const name = document.getElementById('f-name').value.trim();
+    if (!name) { toast('请填写药品名称'); return; }
+
+    const perUse = Math.max(0, Number(document.getElementById('f-peruse').value) || 0);
+    const freq = Math.max(0, Number(document.getElementById('f-freq').value) || 0);
+    const total = Math.max(0, Number(document.getElementById('f-total').value) || 0);
+    const used = Math.max(0, Number(document.getElementById('f-used').value) || 0);
+    const startDate = document.getElementById('f-start').value || todayKey();
+    const auto = document.getElementById('f-auto').checked;
+
+    const payload = {
+      name: name,
+      perUse: perUse,
+      unit: document.getElementById('f-unit').value,
+      period: document.getElementById('f-period').value,
+      freq: freq,
+      total: total,
+      buySize: Math.max(0, Number(document.getElementById('f-buysize').value) || 0),
+      startDate: startDate,
+      used: used,
+      auto: auto,
+      note: document.getElementById('f-note').value.trim()
+    };
+
+    if (editingId) {
+      const m = findMed(editingId);
+      if (m) {
+        const usedChanged = Math.abs((m.used || 0) - used) > 0.001;
+        Object.assign(m, payload);
+        // 手动改过「已用」就把推算基准挪到今天，避免自动推算把这次修正冲掉
+        if (usedChanged) m.lastAdvance = todayKey();
+        if (auto) m.lastAdvance = m.lastAdvance || startDate;
+      }
+    } else {
+      const m = Object.assign({
+        id: 'm' + Date.now().toString(36) + Math.floor(Math.random() * 1000).toString(36),
+        lastAdvance: startDate
+      }, payload);
+      // 已经手填了已用量 → 视为从今天开始重新记账
+      if (used > 0) m.lastAdvance = todayKey();
+      state.meds.push(m);
+    }
+
+    save();
+    closeSheet('ov-form');
+    render();
+    toast('已保存');
+  }
+
+  function deleteMed() {
+    if (!editingId) return;
+    const m = findMed(editingId);
+    if (!m) return;
+    if (!confirm('确定删除「' + m.name + '」？')) return;
+    state.meds = state.meds.filter(function (x) { return x.id !== editingId; });
+    editingId = null;
+    save();
+    closeSheet('ov-form');
+    render();
+    toast('已删除');
+  }
+
+  /* ---------- 弹层 ---------- */
+  function openMore() {
+    document.getElementById('warn-value').textContent = state.warnDays || 4;
+    document.getElementById('ov-more').classList.add('active');
+  }
+  /** 关闭弹层：只能由关闭按钮 / 保存 / 确定触发，点遮罩不关 */
+  function closeSheet(id) {
+    document.getElementById(id).classList.remove('active');
+  }
+
+  let toastTimer = null;
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.remove('show'); }, 2200);
+  }
+
+  /* ---------- 数据备份 ---------- */
+  function copyData() {
+    const text = localStorage.getItem(KEY) || JSON.stringify(defaults());
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(
+        function () { toast('数据已复制'); },
+        function () { fallbackCopy(text); }
+      );
+    } else {
+      fallbackCopy(text);
+    }
+  }
+  function fallbackCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); toast('数据已复制'); }
+    catch (e) { toast('复制失败，请手动选择'); }
+    document.body.removeChild(ta);
+  }
+
+  function isValidData(d) {
+    if (!d || typeof d !== 'object' || !Array.isArray(d.meds)) return false;
+    for (const m of d.meds) {
+      if (!m || typeof m !== 'object') return false;
+      if (typeof m.name !== 'string' || !m.name) return false;
+      if (typeof m.id !== 'string') return false;
+    }
+    return true;
+  }
+
+  function mergeData() {
+    if (navigator.clipboard && navigator.clipboard.readText) {
+      navigator.clipboard.readText().then(
+        function (text) { doMerge(text); },
+        function () { openPaste(); }
+      );
+    } else {
+      openPaste();
+    }
+  }
+  function openPaste() {
+    document.getElementById('paste-text').value = '';
+    document.getElementById('paste-error').style.display = 'none';
+    document.getElementById('ov-paste').classList.add('active');
+  }
+  function submitPaste() {
+    const text = document.getElementById('paste-text').value.trim();
+    const err = document.getElementById('paste-error');
+    if (!text) {
+      err.textContent = '请先粘贴数据';
+      err.style.display = '';
+      return;
+    }
+    const res = doMerge(text);
+    if (res) {
+      err.textContent = res;
+      err.style.display = '';
+      return;
+    }
+    document.getElementById('ov-paste').classList.remove('active');
+    document.getElementById('ov-more').classList.remove('active');
+    toast('数据合并成功');
+  }
+  function doMerge(text) {
+    let imported;
+    try { imported = JSON.parse(text); }
+    catch (e) { return '内容不是有效的 JSON 格式'; }
+    if (!isValidData(imported)) return '数据格式不正确，无法合并';
+
+    const incoming = imported.meds.filter(function (m) { return !findMed(m.id); });
+    if (!incoming.length) return '没有新的药品需要合并';
+    if (!confirm('检测到 ' + incoming.length + ' 种新药品，是否合并到当前清单？')) return null;
+
+    for (const m of incoming) {
+      const copy = Object.assign({}, m);
+      if (!copy.period) copy.period = 'day';
+      if (typeof copy.used !== 'number') copy.used = 0;
+      if (typeof copy.total !== 'number') copy.total = 0;
+      if (copy.auto === undefined) copy.auto = true;
+      if (!copy.startDate) copy.startDate = todayKey();
+      if (!copy.lastAdvance) copy.lastAdvance = copy.startDate;
+      state.meds.push(copy);
+    }
+    save();
+    render();
+    return null;
+  }
+
+  function clearAll() {
+    if (!state.meds.length) { toast('没有数据'); return; }
+    if (!confirm('确定清空全部药品记录？此操作不可撤销。')) return;
+    state.meds = [];
+    save();
+    render();
+    document.getElementById('ov-more').classList.remove('active');
+    toast('已清空');
+  }
+
+  /* ---------- 启动 ---------- */
+  sortBy = state.sortBy || 'days';
+  render();
+
+  // 页面长时间开着 / 从后台切回来时，按天推进一次自动扣减
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) render();
+  });
+  setInterval(function () { render(); }, 1800000);
+
+  (function startupHint() {
+    const urgent = state.meds.filter(function (m) {
+      const c = calc(m);
+      return c.level === 'danger' || c.level === 'empty';
+    });
+    if (urgent.length) {
+      setTimeout(function () {
+        toast(urgent.length + ' 种药品预计 ' + (state.warnDays || 4) + ' 天内用完');
+      }, 600);
+    }
+  })();
+</script>
+</body>
+</html>
