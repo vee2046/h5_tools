@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 入口结构
 
-五个独立入口，每个都是一个完整可双击打开的 HTML：
+六个独立入口，每个都是一个完整可双击打开的 HTML：
 
 | 文件 | 形态 | 说明 |
 | --- | --- | --- |
@@ -17,6 +17,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `feishu.html` | 单文件，所有 CSS 与数据内联 | 「通往 AGI 之路」文章分类索引。改这一个文件即可 |
 | `list/index.html` | 引用 `list/assets/*.js` + `*.css` | 任务管理。**源码不对外开放**，对外文档维持「暂未开源」口径。具体源仓库位置见 `CLAUDE.LOCAL.md` |
 | `whereismoney/index.html` | 原生 HTML + `app.js` + `styles/main.css`（无构建步骤） | 宝盒是怎样月光的。源码就在本仓库，直接编辑即可 |
+| `medicine/index.html` | 单文件，内联 style/script（无构建步骤） | 药品管家。数据 key 是 `medicine_tracker_v1`（`localStorage`） |
 
 `build.flag` 是上游构建留下的标记文件，没有功能性含义。`icons/` 下的 PNG 是各入口的 favicon。
 
@@ -26,6 +27,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **`list/` 下的所有文件**：是源仓库构建后的只读产物，**不要在本仓库直接编辑**。任何功能/UI/数据改动都要在源仓库做、重新构建后再拷贝进来。源仓库路径、构建命令、拷贝步骤、踩坑提示见 `CLAUDE.LOCAL.md`。
 - **`checkIn.html` / `feishu.html`**：单文件，所有逻辑与样式都在文件内。直接编辑即可。
 - **`whereismoney/`**：无上游源码仓库，本仓库即源码。数据 key 是 `baobox.v1`（`localStorage`）。
+- **`medicine/`**：单文件，无上游源码仓库，本仓库即源码。数据 key 是 `medicine_tracker_v1`（`localStorage`）。
 - **新增工具**：参考 `checkIn.html` 的「单文件 + 内联 style/script」形态最简单；若选择走构建产物的形态，注意 bundle 也要由上游构建流程产出并拷贝进来。
 - **数据存储**：所有入口都用浏览器本地存储（`localStorage` / `IndexedDB`），不连后端。新功能不要引入网络请求或鉴权逻辑。
 - **README.md**：是用户面向的对外文档。用户明确要求**不要写技术栈（React/Vite/Tailwind）和本地开发命令**，按「一组静态 HTML 工具，双击 HTML 即可使用」的口径描述；`list/index.html` 写「源码暂未开源」。
