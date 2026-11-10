@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="description" content="脑力慢养：每天几分钟，陪着爸妈慢慢练。" />
+    <meta name="theme-color" content="#FAF6EF" />
+    <script>
+      // 无尾斜杠目录访问（…/mindx）→ 跳到 …/mindx/，避免相对资源解析到上级目录 404
+      (function () {
+        var path = location.pathname;
+        if (!path.endsWith('/') && !/\.[a-zA-Z]+$/.test(path)) {
+          location.replace(path + '/' + location.search + location.hash);
+        }
+      })();
+    </script>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23C2703E'/%3E%3Ctext x='50' y='54' font-size='52' text-anchor='middle' dominant-baseline='central'%3E%F0%9F%A7%A0%3C/text%3E%3C/svg%3E"
+    />
+    <title>脑力慢养</title>
+    <script type="module" crossorigin src="./assets/index-Dn7gRjQF.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-Cg_0Gjgb.css">
+  </head>
+  <body>
+    <div id="app"></div>
+  </body>
+</html>

@@ -18,6 +18,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `list/index.html` | 引用 `list/assets/*.js` + `*.css` | 任务管理。**源码不对外开放**，对外文档维持「暂未开源」口径。具体源仓库位置见 `CLAUDE.LOCAL.md` |
 | `whereismoney/index.html` | 原生 HTML + `app.js` + `styles/main.css`（无构建步骤） | 宝盒是怎样月光的。源码就在本仓库，直接编辑即可 |
 | `medicine/index.html` | 单文件，内联 style/script（无构建步骤） | 药品管家。数据 key 是 `medicine_tracker_v1`（`localStorage`） |
+| `mindx/index.html` | 构建产物（`mindx/assets/*`，带 hash） | 脑力慢养。hash 路由（`#/game/A`），刷新不会 404；数据存 `localStorage` + IndexedDB。具体源仓库位置见 `CLAUDE.LOCAL.md` |
 
 `build.flag` 是上游构建留下的标记文件，没有功能性含义。`icons/` 下的 PNG 是各入口的 favicon。
 
@@ -25,6 +26,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **`index.html` / `list/index.html`**：HTML 壳子本身通常不需要改；若改，要么同步修改上游源码，要么只调整 title/meta/图标这种壳层字段。带 hash 的 JS/CSS 文件名不要手改，会和构建对不上。
 - **`list/` 下的所有文件**：是源仓库构建后的只读产物，**不要在本仓库直接编辑**。任何功能/UI/数据改动都要在源仓库做、重新构建后再拷贝进来。源仓库路径、构建命令、拷贝步骤、踩坑提示见 `CLAUDE.LOCAL.md`。
+- **`mindx/` 下的所有文件**：同样是构建产物的只读镜像，**不要在本仓库直接编辑**。源码在另一个仓库（位置见 `CLAUDE.LOCAL.md`），改源码、重新构建后再拷贝进来。路由是 hash 型（`#/game/A`），刷新不会 404，对托管端无 SPA fallback 要求。具体源仓库、构建与拷贝步骤见 `CLAUDE.LOCAL.md` 的「mindx/ 的来源」。
 - **`checkIn.html` / `feishu.html`**：单文件，所有逻辑与样式都在文件内。直接编辑即可。
 - **`whereismoney/`**：无上游源码仓库，本仓库即源码。数据 key 是 `baobox.v1`（`localStorage`）。
 - **`medicine/`**：单文件，无上游源码仓库，本仓库即源码。数据 key 是 `medicine_tracker_v1`（`localStorage`）。
